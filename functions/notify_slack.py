@@ -78,9 +78,14 @@ def notify_slack(subject, message, region):
 
 
 def lambda_handler(event, context):
-    subject = event['Records'][0]['Sns']['Subject']
-    message = event['Records'][0]['Sns']['Message']
-    region = event['Records'][0]['Sns']['TopicArn'].split(":")[3]
+    if event['Records']:
+        subject = event['Records'][0]['Sns']['Subject']
+        message = event['Records'][0]['Sns']['Message']
+        region = event['Records'][0]['Sns']['TopicArn'].split(":")[3]
+    if event['source'] == "aws.codebuild":
+        subject = "Build for " + event['detail']['project-name'] + " has " + event['detail']['build-status']
+        message = "To view the build, go to https://eu-central-1.console.aws.amazon.com/codesuite/codebuild/projects/" + event['detail']['project-name'] + "/" + event['detail']['build-id'].split(":")[5] + "/log"
+        region = event['detail']['build-id'].split(":")[3]
     notify_slack(subject, message, region)
 
     return message
